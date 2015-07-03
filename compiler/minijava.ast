@@ -1,0 +1,49 @@
+Program ::=  Main:MainClass Decls:ClassDecl*;
+
+abstract Decl;
+
+MainClass:Decl ::= <Ident> <MainArgs> LocalVars:TypedVar* Stmts:Stmt*;
+ClassDecl:Decl ::= <Ident> <Base> Fields:TypedVar* Methods:MethodDecl*;
+TypedVar:Decl ::= Type:TypeUse <Ident>;
+
+MethodDecl:Decl ::= RetType:TypeUse <Ident> FormalParams:TypedVar*
+    LocalVars:TypedVar* Stmts:Stmt* RetExp:Exp;
+
+abstract TypeUse;
+IntArray : TypeUse;
+Bool : TypeUse;
+Int : TypeUse;
+ClassT:TypeUse ::= <Name>;
+
+abstract Stmt;
+
+Block:Stmt ::= Stmts:Stmt*;
+Assign:Stmt ::= <Name> Rhs:Exp;
+ArrayAssign:Stmt ::= <Name> Offset:Exp Exp;
+If:Stmt ::= Cond:Exp TStmt:Stmt FStmt:Stmt;
+While:Stmt ::= Cond:Exp Body:Stmt;
+Print:Stmt ::= Exp;
+
+abstract Exp;
+
+abstract BinExp:Exp ::= Left:Exp Right:Exp;
+And:BinExp;
+Cmp:BinExp;
+Add:BinExp;
+Sub:BinExp;
+Mult:BinExp;
+Not:Exp ::= Exp;
+Neg:Exp ::= Exp;
+
+IdentUse:Exp ::= <Name>;
+ArrayAlloc:Exp ::= Size:Exp;
+ObjAlloc:Exp ::= <Name>;
+ArrayLookup:Exp ::= Exp Offset:Exp;
+ArrayLength:Exp ::= Exp;
+MethodCall:Exp ::= Obj:Exp <Name> Args:Exp*;
+
+
+IntLiteral:Exp ::= <Integer:Integer>;
+True:Exp;
+False:Exp;
+This:Exp;

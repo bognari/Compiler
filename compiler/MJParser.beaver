@@ -1,0 +1,97 @@
+%header {:
+ // this code is inlined before the generated parser
+package minijava;
+:};
+
+%terminals CLASS, GKL, GKR, RKL, RKR, EKL, EKR, SVM, EXTENDS, PUBLIC, RETURN, SEMI, K, BOOLEAN, INT, IF,
+ELSE, WHILE, SOUT, EQ, DOT, TRUE, FALSE, INTEGER, THIS, NEW, EXCLI, AND, PLUS, MINUS, MUL, KLEINER, ID, LENGTH;
+
+%typeof Goal = "Program";
+%typeof INT = "String";
+%typeof Exp = "Exp";
+%typeof ExpList, ParamList, VarDeclList, StatementList, MethodDeclList, ClassDeclList = "List";
+%typeof MainClass = "MainClass";
+%typeof ClassDecl = "ClassDecl";
+%typeof MethodDecl = "MethodDecl";
+%typeof VarDecl = "TypedVar";
+%typeof Type = "TypeUse";
+%typeof Statement = "Stmt";
+%typeof ID = "String";
+
+%left DOT;
+%left MUL;
+%left PLUS, MINUS;
+%left KLEINER;
+%left AND;
+%right EXCLI;
+
+%goal Goal;
+
+// Productions with semantic actions building the JastAdd AST
+
+Goal = Program;
+
+Program = MainClass.bier ClassDeclList.vodka {: return new Program(bier, vodka); :};
+
+MainClass = CLASS ID.name GKL PUBLIC SVM ID.args RKR GKL VarDeclList.localVars StatementList.statements GKR GKR {: return new MainClass(name, args, localVars, statements); :};
+
+ClassDeclList = ClassDecl.clazz ClassDeclList.list {: list.add(clazz); return list; :} |
+    {: return new List(); :};
+
+ClassDecl = CLASS ID.name GKL VarDeclList.attrs MethodDeclList.methods GKR {: return new ClassDecl(name, "Object", attrs, methods); :} |
+           CLASS ID.name EXTENDS ID.base GKL VarDeclList.attrs MethodDeclList.methods GKR {: return new ClassDecl(name, base, attrs, methods); :};
+
+VarDeclList = VarDeclList.list VarDecl.var {: list.add(var); return list; :} |
+{: return new List(); :};
+
+VarDecl = Type.type ID.id SEMI {: return new TypedVar(type, id); :};
+
+MethodDeclList = MethodDecl.method MethodDeclList.list {: list.add(method); return list; :} |
+ {: return new List(); :};
+
+MethodDecl = PUBLIC Type.retType ID.name RKL ParamList.params RKR GKL VarDeclList.localVars StatementList.statements RETURN Exp.value SEMI GKR {: return new MethodDecl(retType, name, params, localVars, statements, value); :};
+
+ParamList = Type.type ID.id {: List list = new List(); list.add(new TypedVar(type, id)); return list; :} |
+            ParamList.list K Type.type ID.id {: list.add(new TypedVar(type, id)); return list; :} |
+            {: return new List(); :};
+
+
+Type = Array |
+       PrimType;
+
+PrimType = BOOLEAN {: return new Bool(); :} |
+           INTEGER {: return new Int(); :} |
+           ID.clazz {: return new ClassT(clazz); :};
+
+Array = INTEGER EKL EKR {: return new IntArray(); :};
+
+StatementList = Statement.statement StatementList.list {: list.add(statement); return list; :} |
+{: return new List(); :};
+
+Statement = GKL StatementList.block GKR {: return new Block(block); :} |
+            IF RKL Exp.con RKR Statement.tequila ELSE Statement.met {: return new If(con, tequila, met); :} |
+            WHILE RKL Exp.vodka RKR Statement.bier {: return new While(vodka, bier); :}|
+            SOUT RKL Exp.value RKR SEMI {: return new Print(value); :} |
+            ID.var EQ Exp.value SEMI {: return new Assign(var, value); :} |
+            ID.array EKL Exp.offset2 EKR EQ Exp.value SEMI {: return new ArrayAssign(array, offset2, value); :};
+
+Exp =   Exp.array EKL Exp.offset2 EKR {: return new ArrayLookup(array, offset2); :} |
+        Exp.array DOT LENGTH {: return new ArrayLength(array); :} |
+        Exp.cristal DOT ID.meth RKL ExpList.list RKR {: return new MethodCall(cristal, meth, list); :} |
+        NEW INTEGER EKL Exp.length EKR {: return new ArrayAlloc(length); :} |
+        NEW ID.clazz RKL RKR {: return new ObjAlloc(clazz); :} |
+        Exp.left AND Exp.right {: return new And(left, right); :} |
+        Exp.left KLEINER Exp.right {: return new Cmp(left, right); :} |
+        Exp.left PLUS Exp.right {: return new Add(left, right); :} |
+        Exp.left MINUS Exp.right {: return new Sub(left, right); :} |
+        Exp.left MUL Exp.right {: return new Mult(left, right); :} |
+        EXCLI Exp.exp {: return new Not(exp); :} |
+        RKL Exp.exp RKR {: return exp; :} |
+        TRUE {: return new True(); :} |
+        FALSE {: return new False(); :} |
+        ID.id {: return new IdentUse(id); :} |
+        INT.value {: return new IntLiteral(Integer.parseInt(value)); :} |
+        THIS {: return new This(); :};
+
+ExpList = Exp.exp {: List list = new List(); list.add(exp); return list; :} |
+          ExpList.list K Exp.exp {: list.add(exp); return list; :};
